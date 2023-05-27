@@ -29,12 +29,17 @@ void usage(void)
 int main(int argc, char **argv)
 {
 	// MPI variables
-	int numtasks, rank;
+	int numTasks, rank;
 
 	// Initialize MPI
 	MPI_Init(&argc, &argv);
-	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+	MPI_Comm_size(MPI_COMM_WORLD, &numTasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+
+	// Create the MPI type for a row of the board
+	MPI_Datatype MPI_ROW;
+	MPI_Type_contiguous(D_COL_NUM, MPI_UNSIGNED_CHAR, &MPI_ROW);
+	MPI_Type_commit(&MPI_ROW);
 
 	// Set default rate of ticks.
 	int TICKS = 50000;
@@ -158,15 +163,21 @@ int main(int argc, char **argv)
 	}
 
 	// Divide the board rows among the processes.
-	int rowsPerProcess = board->ROW_NUM / numtasks;
+	int rowsPerProcess = board->ROW_NUM / numTasks;
 	int firstRow = rank * rowsPerProcess;
 	int lastRow = firstRow + rowsPerProcess - 1;
 
 	// If the board cannot be evenly divided among the processes, give the last process the extra rows.
-	if (rank == numtasks - 1)
+	if (rank == numTasks - 1)
 	{
-		lastRow += board->ROW_NUM % numtasks;
+		lastRow += board->ROW_NUM % numTasks;
 	}
+
+	// Calculate the neighbor processes. (as the world is round, the first and last process are neighbors)
+	int upNeighbor = (rank == 0) ? numTasks - 1 : rank - 1;
+	int downNeighbor = (rank == numTasks - 1) ? 0 : rank + 1;
+	int neighborsRank[2] = {upNeighbor, downNeighbor};
+
 
 	if (LoadFile)
 	{
@@ -182,7 +193,14 @@ int main(int argc, char **argv)
 		life_init(board, prob, &seed);
 	}
 
-	if (Graphical_Mode)
+	// Send asynchronous the cellstate to the neighbors.
+	// The top row to the up neighbor and the bottom row to the down neighbor.
+	if (rank != 0) {
+		MPI_Isend(&board->cell_state[firstRow][0], 1, MPI_ROW, upNeighbor, 0, MPI_COMM_WORLD, (MPI_Request*) MPI_REQUEST_NULL);
+		MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, 0, MPI_COMM_WORLD, (MPI_Request*) MPI_REQUEST_NULL);
+	}
+	
+	if (Graphical_Mode && rank == 0)
 	{
 		// Initialize SDL subsystem
 		if (SDL_Init(SDL_INIT_VIDEO) != 0)
@@ -241,7 +259,7 @@ int main(int argc, char **argv)
 	while (quit == false && (EndTime < 0 || Iteration < EndTime))
 	{
 
-		if (Graphical_Mode)
+		if (Graphical_Mode && rank==0)
 		{
 			// Poll event and provide event type to switch statement
 			while (SDL_PollEvent(&e))
@@ -344,9 +362,14 @@ int main(int argc, char **argv)
 			SDL_RenderClear(renderer);
 		}
 
-		render_board(renderer, board, neighbors);
+		if (Iteration > 0) {
+			// Gather all the data from the other processes for rendering the board on screen
+			MPI_Gather(&board->cell_state[firstRow], rowsPerProcess, MPI_ROW, &board->cell_state, rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
+		}
 
-		if (Graphical_Mode)
+		mpi_render_board(renderer, board, neighbors, rank, MPI_ROW, neighborsRank, firstRow, lastRow, numTasks);
+
+		if (Graphical_Mode && rank==0)
 		{
 			SDL_RenderPresent(renderer);
 			usleep(TICKS);

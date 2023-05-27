@@ -418,8 +418,12 @@ void mpi_life_read (char *filename, board_t* board, int firstRow, int lastRow)
   // Go to the start of the first row to read (assume that between the integers there is a space)
   if (firstRow != 0)
     MPI_File_seek(input_unit, firstRow * board->COL_NUM * 2 + firstRow + 1, MPI_SEEK_SET);
-  else
+  else {
     MPI_File_seek(input_unit, 1, MPI_SEEK_SET);
+    // Read all the matrix for printing the initial state
+    firstRow = 0;
+    lastRow = board->ROW_NUM - 1;
+  }
 
 /*
   Read the rows from the matrix.
