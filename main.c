@@ -28,9 +28,13 @@ void usage(void)
 
 int main(int argc, char **argv)
 {
+	// MPI variables
+	int numtasks, rank;
+
 	// Initialize MPI
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &numtasks);
+	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
 	// Set default rate of ticks.
 	int TICKS = 50000;
@@ -153,10 +157,21 @@ int main(int argc, char **argv)
 		}
 	}
 
+	// Divide the board rows among the processes.
+	int rowsPerProcess = board->ROW_NUM / numtasks;
+	int firstRow = rank * rowsPerProcess;
+	int lastRow = firstRow + rowsPerProcess - 1;
+
+	// If the board cannot be evenly divided among the processes, give the last process the extra rows.
+	if (rank == numtasks - 1)
+	{
+		lastRow += board->ROW_NUM % numtasks;
+	}
+
 	if (LoadFile)
 	{
 		printf("Loading Board file %s.\n", input_file);
-		life_read(input_file, board);
+		mpi_life_read(input_file, board, firstRow, lastRow);
 	}
 	else
 	{ // Rando, init file
