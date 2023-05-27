@@ -2,6 +2,8 @@
 #include "./game.h"
 #include "./logic.h"
 
+#include "mpi.h"
+
 void click_on_cell(board_t* board, int row, int column)
 {
   if (board->game_state == PAUSE_STATE) {
@@ -382,6 +384,52 @@ void life_read (char *filename, board_t* board)
   Close the file.
 */
   fclose ( input_unit );
+
+  return;
+}
+
+/******************************************************************************/
+
+void mpi_life_read (char *filename, board_t* board, int firstRow, int lastRow)
+
+/******************************************************************************/
+/*
+  Purpose:
+    MPI_LIFE_READ reads a file to a grid.
+
+  Parameters:
+
+    Input, char *INPUT_FILENAME, the input file name.
+    Board, the board to read into
+    firstRow, the first row of the board to read into
+    lastRow, the last row of the board to read into
+
+*/
+
+{
+  MPI_File input_unit;
+/*
+  input the file.
+*/
+  MPI_File_open(MPI_COMM_WORLD, filename, MPI_MODE_RDONLY, MPI_INFO_NULL, &input_unit);
+  if (input_unit==NULL)
+    perror("Reading input file:");
+  
+  // Go to the start of the first row to read
+  MPI_File_seek(input_unit, firstRow * board->COL_NUM, MPI_SEEK_SET);
+
+/*
+  Read the rows from the matrix.
+*/
+  for (int i = 0; i < board->COL_NUM; i++) {
+    for (int j = firstRow; j < lastRow; j++) {
+      MPI_File_read(input_unit, &(board->cell_state[i][j]), 1, MPI_UNSIGNED_CHAR, MPI_STATUS_IGNORE);
+    }
+  }
+/*
+  Close the file.
+*/
+  MPI_File_close(&input_unit);
 
   return;
 }
