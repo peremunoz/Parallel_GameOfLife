@@ -234,7 +234,7 @@ int main(int argc, char **argv)
 		}
 	}
 
-	printf("Start Simulatiom.\n");
+	printf("Start Simulation.\n");
 	fflush(stdout);
 	bool quit = false;
 	int Iteration = 0;
