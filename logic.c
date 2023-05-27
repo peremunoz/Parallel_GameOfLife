@@ -428,15 +428,17 @@ void mpi_life_read (char *filename, board_t* board, int firstRow, int lastRow)
     for (int j = 0; j < board->COL_NUM; j++) {
       
       // Read the integer representing the cell state
-      MPI_File_read(input_unit, &(board->cell_state[i][j]), 1, MPI_CHAR, MPI_STATUS_IGNORE);
+      char readChar;
+      MPI_File_read(input_unit, &readChar, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+      board->cell_state[i][j] = readChar - '0';
       
       // Read the space between the integers
-      char charRead;
-      MPI_File_read(input_unit, &charRead, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+      char space;
+      MPI_File_read(input_unit, &space, 1, MPI_CHAR, MPI_STATUS_IGNORE);
 
       // If we are at the end of the row, read the newline character
       if (j == board->COL_NUM - 1)
-        MPI_File_read(input_unit, &charRead, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+        MPI_File_read(input_unit, &space, 1, MPI_CHAR, MPI_STATUS_IGNORE);
       
     }
   }
