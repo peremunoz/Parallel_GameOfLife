@@ -415,15 +415,29 @@ void mpi_life_read (char *filename, board_t* board, int firstRow, int lastRow)
   if (input_unit==NULL)
     perror("Reading input file:");
   
-  // Go to the start of the first row to read
-  MPI_File_seek(input_unit, firstRow * board->COL_NUM, MPI_SEEK_SET);
+  // Go to the start of the first row to read (assume that between the integers there is a space)
+  if (firstRow != 0)
+    MPI_File_seek(input_unit, firstRow * board->COL_NUM * 2 + firstRow + 1, MPI_SEEK_SET);
+  else
+    MPI_File_seek(input_unit, 1, MPI_SEEK_SET);
 
 /*
   Read the rows from the matrix.
 */
-  for (int i = 0; i < board->COL_NUM; i++) {
-    for (int j = firstRow; j < lastRow; j++) {
-      MPI_File_read(input_unit, &(board->cell_state[i][j]), 1, MPI_UNSIGNED_CHAR, MPI_STATUS_IGNORE);
+  for (int i = firstRow; i <= lastRow; i++) {
+    for (int j = 0; j < board->COL_NUM; j++) {
+      
+      // Read the integer representing the cell state
+      MPI_File_read(input_unit, &(board->cell_state[i][j]), 1, MPI_CHAR, MPI_STATUS_IGNORE);
+      
+      // Read the space between the integers
+      char charRead;
+      MPI_File_read(input_unit, &charRead, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+
+      // If we are at the end of the row, read the newline character
+      if (j == board->COL_NUM - 1)
+        MPI_File_read(input_unit, &charRead, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+      
     }
   }
 /*
