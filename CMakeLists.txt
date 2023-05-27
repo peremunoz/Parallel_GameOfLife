@@ -8,6 +8,8 @@ project(conway C)
 list(APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake/sdl2)
 
 find_package(SDL2 REQUIRED)
+find_package(MPI REQUIRED)
+
 
 SET(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O0 -Wall -Werror -fdump-rtl-expand")
 
@@ -27,4 +29,8 @@ set(CMAKE_SYSTEM_PREFIX_PATH ${CMAKE_CURRENT_SOURCE_DIR})
 
 add_executable(conway ${SRCS} ${HEADERS})
 install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(${PROJECT_NAME} SDL2::Main)
+target_link_libraries(${PROJECT_NAME} 
+PRIVATE
+  SDL2::Main 
+  MPI::MPI_C
+)
