@@ -1,0 +1,7 @@
+{
+    "files.associations": {
+        "logic.h": "c",
+        "game.h": "c",
+        "mpi.h": "c"
+    }
+}
