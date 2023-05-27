@@ -24,6 +24,32 @@ void render_board(SDL_Renderer* renderer, board_t* board,
   }
 }
 
+void mpi_render_board(SDL_Renderer* renderer, board_t* board,
+                  unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
+{
+  switch(board->game_state) {
+    case RUNNING_STATE:
+      if (Graphical_Mode)
+      	render_running_state(renderer, board);
+      
+      // Receive the neighbors cells from the other processes
+      // ...
+
+      count_neighbors(board, neighbors);
+      evolve(board, neighbors);
+
+      // Send the neighbors cells to the other processes
+      // ...
+
+      break;
+    case PAUSE_STATE:
+      if (Graphical_Mode)
+        render_pause_state(renderer, board);
+      break;
+    default: {}
+  }
+}
+
 void render_running_state(SDL_Renderer *renderer, board_t *board)
 {
   int pos_x = 0;
