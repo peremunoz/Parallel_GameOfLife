@@ -12,7 +12,7 @@ void render_board(SDL_Renderer* renderer, board_t* board,
 void mpi_render_board(SDL_Renderer* renderer, board_t* board,
                   unsigned char neighbors[D_COL_NUM][D_ROW_NUM],
                   int rank, MPI_Datatype rowType, int neighborsRank[2],
-                  int firstRow, int lastRow, int size);
+                  int firstRow, int lastRow, int size, int iteration);
 
 void render_running_state(SDL_Renderer *renderer, board_t *board);
 
