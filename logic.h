@@ -17,6 +17,8 @@ void life_write ( char *output_filename, board_t* board);
 
 void mpi_life_read (char *filename, board_t* board, int firstRow, int lastRow);
 
+void mpi_life_write ( char *output_filename, board_t* board, int firstRow, int lastRow);
+
 double r8_uniform_01 ( int *seed );
 
 void life_init (board_t* board, double prob, int *seed );

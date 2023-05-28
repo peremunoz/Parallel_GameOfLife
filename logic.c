@@ -457,6 +457,65 @@ void mpi_life_read (char *filename, board_t* board, int firstRow, int lastRow)
 
 /******************************************************************************/
 
+void mpi_life_write ( char *output_filename, board_t* board, int firstRow, int lastRow)
+
+/******************************************************************************/
+/*
+  Purpose:
+
+    MPI_LIFE_WRITE writes a boad to a file.
+
+  Parameters:
+
+    Input, char *OUTPUT_FILENAME, the output file name.
+
+*/
+{
+  MPI_File output_unit;
+/*
+  Open the file.
+*/
+  MPI_File_open(MPI_COMM_WORLD, output_filename, MPI_MODE_CREATE | MPI_MODE_WRONLY, MPI_INFO_NULL, &output_unit);
+/*
+  Create the view for the file
+*/
+  MPI_Offset offset;
+  if (firstRow != 0)
+    offset = firstRow * board->COL_NUM * 2 + firstRow;
+  else {
+    offset = 0;
+  }
+
+  MPI_File_set_view(output_unit, offset, MPI_CHAR, MPI_CHAR, "native", MPI_INFO_NULL);
+/*
+  Write the data.
+*/
+  for (int i = firstRow; i < lastRow; i++) {
+    for (int j = 0; j < board->COL_NUM; j++) {
+
+      // Write the space between the integers
+      char space = ' ';
+      MPI_File_write(output_unit, &space, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+
+      // Write the integer representing the cell state
+      char writeChar = board->cell_state[i][j] + '0';
+      MPI_File_write(output_unit, &writeChar, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+      
+    }
+    // If we are at the end of the row, write the newline character
+    char newline = '\n';
+    MPI_File_write(output_unit, &newline, 1, MPI_CHAR, MPI_STATUS_IGNORE);
+  }
+/*
+  Close the file.
+*/
+  MPI_File_close(&output_unit);
+
+  return;
+}
+
+/******************************************************************************/
+
 void life_write ( char *output_filename, board_t* board)
 
 /******************************************************************************/
@@ -492,6 +551,7 @@ void life_write ( char *output_filename, board_t* board)
 
   return;
 }
+
 /******************************************************************************/
 
 double r8_uniform_01 ( int *seed )
