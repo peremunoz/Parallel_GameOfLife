@@ -36,11 +36,6 @@ int main(int argc, char **argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &numTasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-	// Create the MPI type for a row of the board
-	MPI_Datatype MPI_ROW;
-	MPI_Type_contiguous(D_COL_NUM, MPI_UNSIGNED_CHAR, &MPI_ROW);
-	MPI_Type_commit(&MPI_ROW);
-
 	// Set default rate of ticks.
 	int TICKS = 50000;
 	bool LoadFile = false, SaveFile = false;
@@ -162,6 +157,11 @@ int main(int argc, char **argv)
 		}
 	}
 
+	// Create the MPI type for a row of the board
+	MPI_Datatype MPI_ROW;
+	MPI_Type_contiguous(board->COL_NUM, MPI_UNSIGNED_CHAR, &MPI_ROW);
+	MPI_Type_commit(&MPI_ROW);
+
 	// Divide the board rows among the processes.
 	int rowsPerProcess = board->ROW_NUM / numTasks;
 	int firstRow = rank * rowsPerProcess;
@@ -195,10 +195,10 @@ int main(int argc, char **argv)
 
 	// Send asynchronous the cellstate to the neighbors.
 	// The top row to the up neighbor and the bottom row to the down neighbor.
-	if (rank != 0) {
-		MPI_Isend(&board->cell_state[firstRow][0], 1, MPI_ROW, upNeighbor, 0, MPI_COMM_WORLD, (MPI_Request*) MPI_REQUEST_NULL);
-		MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, 0, MPI_COMM_WORLD, (MPI_Request*) MPI_REQUEST_NULL);
-	}
+	MPI_Request request[2];
+
+	MPI_Isend(&board->cell_state[firstRow][0], 1, MPI_ROW, upNeighbor, 0, MPI_COMM_WORLD, &request[0]);
+	MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, 0, MPI_COMM_WORLD, &request[1]);
 	
 	if (Graphical_Mode && rank == 0)
 	{
@@ -364,10 +364,19 @@ int main(int argc, char **argv)
 
 		if (Iteration > 0) {
 			// Gather all the data from the other processes for rendering the board on screen
-			MPI_Gather(&board->cell_state[firstRow], rowsPerProcess, MPI_ROW, &board->cell_state, rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
+			// Copy the board cell state to another array, so that the gather operation doesn't overwrite the current board state
+			unsigned char cellStateCopy[board->COL_NUM][board->ROW_NUM];
+			memcpy(cellStateCopy, board->cell_state, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
+
+			MPI_Gather(&board->cell_state[firstRow][0], rowsPerProcess, MPI_ROW, &cellStateCopy, rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
+
+			if (rank == 0) {
+				// Copy the received data to the board cell state
+				memcpy(board->cell_state, cellStateCopy, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
+			}
 		}
 
-		mpi_render_board(renderer, board, neighbors, rank, MPI_ROW, neighborsRank, firstRow, lastRow, numTasks);
+		mpi_render_board(renderer, board, neighbors, rank, MPI_ROW, neighborsRank, firstRow, lastRow, numTasks, Iteration);
 
 		if (Graphical_Mode && rank==0)
 		{
@@ -381,7 +390,7 @@ int main(int argc, char **argv)
 	}
 	printf("\nEnd Simulation.\n");
 
-	if (Graphical_Mode)
+	if (Graphical_Mode && rank==0)
 	{
 		// Clean up
 		SDL_DestroyWindow(window);
@@ -393,7 +402,8 @@ int main(int argc, char **argv)
 	{
 		printf("Writting Board file %s.\n", output_file);
 		fflush(stdout);
-		life_write(output_file, board);
+		//life_write(output_file, board);
+		mpi_life_write(output_file, board, firstRow, lastRow);
 	}
 
 	return EXIT_SUCCESS;
