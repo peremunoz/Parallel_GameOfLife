@@ -9,8 +9,8 @@
 #define RUNNING_STATE 0
 #define PAUSE_STATE 1
 
-#define UP_TAG 1
-#define DOWN_TAG 2
+#define UP_TO_DOWN_TAG 1
+#define DOWN_TO_UP_TAG 2
 
 //#define GRAPHICAL_MODE
 
