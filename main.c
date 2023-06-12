@@ -13,6 +13,19 @@
 
 #include "mpi.h"
 
+void print_board(board_t *board)
+{
+	for (int i = 0; i < board->COL_NUM; i++)
+	{
+		for (int j = 0; j < board->ROW_NUM; j++)
+		{
+			printf(" %d", board->cell_state[i][j]);
+		}
+		printf("\n");
+	}
+	fflush(stdout);
+}
+
 void usage(void)
 {
 	printf("\nUsage: conway [-g] [-w weight] [-h heigt] [-i input_board_file] [-o output_board_file] [-e End_time] [-t ticks] [-c cell_size] \n\n-t\tSet number of ticks in microseconds.\n\t");
@@ -193,12 +206,35 @@ int main(int argc, char **argv)
 		life_init(board, prob, &seed);
 	}
 
-	// Send asynchronous the cellstate to the neighbors.
+	// Send asynchronous the cell state to the neighbors.
 	// The top row to the up neighbor and the bottom row to the down neighbor.
 	MPI_Request request[2];
 
-	MPI_Isend(&board->cell_state[firstRow][0], 1, MPI_ROW, upNeighbor, 0, MPI_COMM_WORLD, &request[0]);
-	MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, 0, MPI_COMM_WORLD, &request[1]);
+	MPI_Isend(&board->cell_state[firstRow][0], 1, MPI_ROW, upNeighbor, DOWN_TO_UP_TAG, MPI_COMM_WORLD, &request[0]);
+
+	if (rank==0) {
+		printf("Sending row %d to %d. Row sent:", firstRow, upNeighbor);
+
+		for (int i = 0; i < board->COL_NUM; i++)
+		{
+			printf("%u", board->cell_state[firstRow][i]);
+		}
+		printf("\n");
+		fflush(stdout);
+	}
+
+	MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, UP_TO_DOWN_TAG, MPI_COMM_WORLD, &request[1]);
+
+	if (rank==0) {
+		printf("Sending row %d to %d. Row sent:", lastRow, downNeighbor);
+
+		for (int i = 0; i < board->COL_NUM; i++)
+		{
+			printf("%u", board->cell_state[lastRow][i]);
+		}
+		printf("\n");
+		fflush(stdout);
+	}
 	
 	if (Graphical_Mode && rank == 0)
 	{
@@ -252,8 +288,10 @@ int main(int argc, char **argv)
 		}
 	}
 
-	printf("Start Simulation.\n");
-	fflush(stdout);
+	if (rank == 0) {
+		printf("Start Simulation.\n"); fflush(stdout);
+	}
+	
 	bool quit = false;
 	int Iteration = 0;
 	while (quit == false && (EndTime < 0 || Iteration < EndTime))
@@ -373,6 +411,8 @@ int main(int argc, char **argv)
 			if (rank == 0) {
 				// Copy the received data to the board cell state
 				memcpy(board->cell_state, cellStateCopy, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
+				// Print board
+				print_board(board);
 			}
 		}
 
@@ -384,11 +424,13 @@ int main(int argc, char **argv)
 			usleep(TICKS);
 		}
 
-		// Iteration++;
-		printf("[%05d] Life Game Simulation step.\r", ++Iteration);
-		fflush(stdout);
+		Iteration++;
+		if (rank == 0) {
+			printf("[%05d] Life Game Simulation step.\n", Iteration); fflush(stdout);
+		}
 	}
-	printf("\nEnd Simulation.\n");
+	if (rank == 0)
+		printf("\nEnd Simulation.\n");
 
 	if (Graphical_Mode && rank==0)
 	{
@@ -400,8 +442,10 @@ int main(int argc, char **argv)
 	// Save board
 	if (SaveFile)
 	{
-		printf("Writting Board file %s.\n", output_file);
-		fflush(stdout);
+		if (rank == 0) {
+			printf("Saving Board file %s.\n", output_file); fflush(stdout);
+		}
+
 		//life_write(output_file, board);
 		mpi_life_write(output_file, board, firstRow, lastRow);
 	}
