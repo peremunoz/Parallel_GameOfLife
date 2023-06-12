@@ -12,7 +12,7 @@ void render_board(SDL_Renderer* renderer, board_t* board,
   switch(board->game_state) {
     case RUNNING_STATE:
       if (Graphical_Mode)
-      	render_running_state(renderer, board);
+        render_running_state(renderer, board);
       count_neighbors(board, neighbors);
       evolve(board, neighbors);
       break;
@@ -33,7 +33,7 @@ void mpi_render_board(SDL_Renderer* renderer, board_t* board,
     case RUNNING_STATE:
 
       if (Graphical_Mode && rank == 0)
-      	render_running_state(renderer, board);
+        render_running_state(renderer, board);
 
       if (rank != 0 && iteration > 0) {
         // The rank 0 process doesn't need to receive the neighbors cells, because it already has them from the gather operation (except for the iteration 0)
