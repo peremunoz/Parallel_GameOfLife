@@ -11,6 +11,8 @@ void count_neighbors_flat_world(board_t* board, unsigned char neighbors[D_COL_NU
 
 void evolve(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM]);
 
+void evolve_mpi(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM], int firstRow, int lastRow);
+
 void life_read ( char *filename, board_t* board);
 
 void life_write ( char *output_filename, board_t* board);

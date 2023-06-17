@@ -348,6 +348,25 @@ void evolve(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
   }
 }
 
+void evolve_mpi(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM], int firstRow, int lastRow)
+{
+  for (int i = 0; i < board->COL_NUM; i++) {
+    for (int j = firstRow; j < lastRow; j++) {
+      // underopulation case
+      if (neighbors[i][j] < 2)
+        board->cell_state[i][j] = DEAD;
+      // birth case
+      else if (neighbors[i][j] == 3)
+        board->cell_state[i][j] = ALIVE;
+      // overpopulation case
+      else if (neighbors[i][j] > 3)
+        board->cell_state[i][j] = DEAD;
+      // survival case is implicit, as only cells with 2 or 3 neighbors will
+      // survive.
+    }
+  }
+}
+
 
 /******************************************************************************/
 
