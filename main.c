@@ -443,7 +443,6 @@ int main(int argc, char **argv)
 			printf("Saving Board file %s.\n", output_file); fflush(stdout);
 		}
 
-		//life_write(output_file, board);
 		mpi_life_write(output_file, board, firstRow, lastRow);
 	}
 	MPI_Type_free(&MPI_ROW);

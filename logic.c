@@ -670,7 +670,7 @@ void mpi_life_write ( char *output_filename, board_t* board, int firstRow, int l
 /*
   Write the data.
 */
-  for (int i = firstRow; i < lastRow; i++) {
+  for (int i = firstRow; i <= lastRow; i++) {
     for (int j = 0; j < board->COL_NUM; j++) {
 
       // Write the space between the integers
