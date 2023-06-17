@@ -75,14 +75,14 @@ void mpi_render_board(SDL_Renderer* renderer, board_t* board,
       // Send the neighbors cells to the other processes
 
       // As the rank 0 process doesn't need to receive the neighbors cells, rank 1 can avoid this send operation
-      if (rank != 1) {
+      if (iteration==0 || rank != 1) {
         MPI_Request topRowSendRequest;
         // Send the first row to the top adjacent process
         MPI_Isend(&board->cell_state[firstRow][0], 1, rowType, neighborsRank[0], DOWN_TO_UP_TAG, MPI_COMM_WORLD, &topRowSendRequest);
       }
       
       // Same for the last process, which doesn't need to send the bottom row to the first process (rank 0)
-      if (rank != size - 1) {
+      if (iteration==0 || rank != size - 1) {
         MPI_Request bottomRowSendRequest;
         // Send the last row to the bottom adjacent process
         MPI_Isend(&board->cell_state[lastRow][0], 1, rowType, neighborsRank[1], UP_TO_DOWN_TAG, MPI_COMM_WORLD, &bottomRowSendRequest);
