@@ -5,7 +5,9 @@
 #include <string.h>
 #include <stdio.h>
 
+#ifndef NO_SDL
 #include <SDL2/SDL.h>
+#endif
 
 #include "./game.h"
 #include "./logic.h"
@@ -49,6 +51,7 @@ int main(int argc, char **argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &numTasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
+#ifndef NO_SDL
 	// Set default rate of ticks.
 	int TICKS = 50000;
 	bool LoadFile = false, SaveFile = false;
@@ -64,7 +67,7 @@ int main(int argc, char **argv)
 	SDL_Rect peeper; // In future may take values from event loop.
 	SDL_Window *window;
 	SDL_Renderer *renderer;
-
+#endif
 	// Set initial window scaling factor
 	float SCALE = 0.5;
 
@@ -219,6 +222,7 @@ int main(int argc, char **argv)
 
 	MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, UP_TO_DOWN_TAG, MPI_COMM_WORLD, &request[1]);
 	
+#ifndef NO_SDL
 	if (Graphical_Mode && rank == 0)
 	{
 		// Initialize SDL subsystem
@@ -270,6 +274,7 @@ int main(int argc, char **argv)
 			return EXIT_FAILURE;
 		}
 	}
+#endif
 
 	if (rank == 0) {
 		printf("Start Simulation.\n"); fflush(stdout);
@@ -279,7 +284,7 @@ int main(int argc, char **argv)
 	int Iteration = 0;
 	while (quit == false && (EndTime < 0 || Iteration < EndTime))
 	{
-
+#ifndef NO_SDL
 		if (Graphical_Mode && rank==0)
 		{
 			// Poll event and provide event type to switch statement
@@ -382,7 +387,7 @@ int main(int argc, char **argv)
 			SDL_SetRenderDrawColor(renderer, 40, 40, 40, 1);
 			SDL_RenderClear(renderer);
 		}
-
+#endif
 		if (Iteration > 0) {
 			// Gather all the data from the other processes for rendering the board on screen
 			// Copy the board cell state to another array, so that the gather operation doesn't overwrite the current board state
@@ -396,14 +401,19 @@ int main(int argc, char **argv)
 				memcpy(board->cell_state, cellStateCopy, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
 			}
 		}
-
+#ifdef NO_SDL
+		mpi_render_board(board, neighbors, rank, MPI_ROW, neighborsRank, firstRow, lastRow, numTasks, Iteration);
+#else
 		mpi_render_board(renderer, board, neighbors, rank, MPI_ROW, neighborsRank, firstRow, lastRow, numTasks, Iteration);
+#endif
 
+#ifndef NO_SDL
 		if (Graphical_Mode && rank==0)
 		{
 			SDL_RenderPresent(renderer);
 			usleep(TICKS);
 		}
+#endif
 
 		Iteration++;
 		if (rank == 0) {

@@ -1,4 +1,6 @@
+#ifndef NO_SDL
 #include <SDL2/SDL.h>
+#endif
 
 #include "./game.h"
 #include "./render.h"
@@ -36,7 +38,7 @@ void render_board(SDL_Renderer* renderer, board_t* board,
     default: {}
   }
 }
-
+#ifndef NO_SDL
 void mpi_render_board(SDL_Renderer* renderer, board_t* board,
                   unsigned char neighbors[D_COL_NUM][D_ROW_NUM],
                   int rank, MPI_Datatype rowType, int neighborsRank[2],
@@ -95,6 +97,62 @@ void mpi_render_board(SDL_Renderer* renderer, board_t* board,
     default: {}
   }
 }
+#endif
+#ifdef NO_SDL
+void mpi_render_board(board_t* board,
+                  unsigned char neighbors[D_COL_NUM][D_ROW_NUM],
+                  int rank, MPI_Datatype rowType, int neighborsRank[2],
+                  int firstRow, int lastRow, int size, int iteration)
+{
+  switch(board->game_state) {
+    case RUNNING_STATE:
+
+      if ((iteration == 0) || (rank != 0)) {
+        // The rank 0 process doesn't need to receive the neighbors cells, because it already has them from the gather operation (except for the iteration 0)
+      
+        // Receive the neighbors cells from the other processes
+
+        // Receive the top adjacent row
+        MPI_Request topRowRequest;
+        int topRowToReceive = firstRow == 0 ? board->ROW_NUM - 1 : firstRow - 1;
+        MPI_Irecv(&board->cell_state[topRowToReceive][0], 1, rowType, neighborsRank[0], UP_TO_DOWN_TAG, MPI_COMM_WORLD, &topRowRequest);
+
+        // Receive the bottom adjacent row
+        MPI_Request bottomRowRequest;
+        int bottomRowToReceive = lastRow == board->ROW_NUM - 1 ? 0 : lastRow + 1;
+        MPI_Irecv(&board->cell_state[bottomRowToReceive][0], 1, rowType, neighborsRank[1], DOWN_TO_UP_TAG, MPI_COMM_WORLD, &bottomRowRequest);
+
+        // Wait for the receive operations to complete
+        MPI_Wait(&topRowRequest, MPI_STATUS_IGNORE);
+        MPI_Wait(&bottomRowRequest, MPI_STATUS_IGNORE);
+      }
+
+      count_neighbors_mpi(board, neighbors, firstRow, lastRow);
+      evolve_mpi(board, neighbors, firstRow, lastRow);
+
+      // Send the neighbors cells to the other processes
+
+      // As the rank 0 process doesn't need to receive the neighbors cells, rank 1 can avoid this send operation
+      if (iteration==0 || rank != 1) {
+        MPI_Request topRowSendRequest;
+        // Send the first row to the top adjacent process
+        MPI_Isend(&board->cell_state[firstRow][0], 1, rowType, neighborsRank[0], DOWN_TO_UP_TAG, MPI_COMM_WORLD, &topRowSendRequest);
+      }
+      
+      // Same for the last process, which doesn't need to send the bottom row to the first process (rank 0)
+      if (iteration==0 || rank != size - 1) {
+        MPI_Request bottomRowSendRequest;
+        // Send the last row to the bottom adjacent process
+        MPI_Isend(&board->cell_state[lastRow][0], 1, rowType, neighborsRank[1], UP_TO_DOWN_TAG, MPI_COMM_WORLD, &bottomRowSendRequest);
+      }
+
+      break;
+    case PAUSE_STATE:
+      break;
+    default: {}
+  }
+}
+#endif
 
 void render_running_state(SDL_Renderer *renderer, board_t *board)
 {
