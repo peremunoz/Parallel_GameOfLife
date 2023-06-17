@@ -7,10 +7,10 @@
 extern bool Graphical_Mode;
 
 void render_board(SDL_Renderer* renderer, board_t* board, 
-                 unsigned char neighbors[D_COL_NUM][D_ROW_NUM]);
+                 unsigned char neighbors[D_ROW_NUM][D_COL_NUM]);
 
 void mpi_render_board(SDL_Renderer* renderer, board_t* board,
-                  unsigned char neighbors[D_COL_NUM][D_ROW_NUM],
+                  unsigned char neighbors[D_ROW_NUM][D_COL_NUM],
                   int rank, MPI_Datatype rowType, int neighborsRank[2],
                   int firstRow, int lastRow, int size, int iteration);
 
