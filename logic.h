@@ -3,15 +3,19 @@
 
 void click_on_cell(board_t* board, int row, int column);
 
-void count_neighbors(board_t* board, unsigned char neighbors[D_COL_NUM][D_ROW_NUM]);
+void count_neighbors(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM]);
 
-void count_neighbors_spherical_world(board_t* board, unsigned char neighbors[D_COL_NUM][D_ROW_NUM]);
+void count_neighbors_mpi(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM], int firstRow, int lastRow);
 
-void count_neighbors_flat_world(board_t* board, unsigned char neighbors[D_COL_NUM][D_ROW_NUM]);
+void count_neighbors_spherical_world(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM]);
 
-void evolve(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM]);
+void count_neighbors_spherical_world_mpi(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM], int firstRow, int lastRow);
 
-void evolve_mpi(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM], int firstRow, int lastRow);
+void count_neighbors_flat_world(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM]);
+
+void evolve(board_t* board, const unsigned char neighbors[D_ROW_NUM][D_COL_NUM]);
+
+void evolve_mpi(board_t* board, const unsigned char neighbors[D_ROW_NUM][D_COL_NUM], int firstRow, int lastRow);
 
 void life_read ( char *filename, board_t* board);
 
