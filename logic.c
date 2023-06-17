@@ -20,29 +20,34 @@ void click_on_cell(board_t* board, int row, int column)
     printf("Game is running, hit space to pause and edit.\n");
 }
 
-void count_neighbors(board_t* board, unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
+void count_neighbors(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM])
 {
 	count_neighbors_spherical_world(board, neighbors);
 }
 
-void count_neighbors_spherical_world(board_t* board, unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
+void count_neighbors_mpi(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM], int firstRow, int lastRow)
+{
+	count_neighbors_spherical_world_mpi(board, neighbors, firstRow, lastRow);
+}
+
+void count_neighbors_spherical_world(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM])
 {
 	int i_prev, i_next, j_prev, j_next;
 	
   // Clear neighbors
-  for (int i = 0; i < board->COL_NUM; i++) {
-    for (int j = 0; j < board->ROW_NUM; j++) {
+  for (int i = 0; i < board->ROW_NUM; i++) {
+    for (int j = 0; j < board->COL_NUM; j++) {
       neighbors[i][j] = DEAD;
     }
   }
 
   // Inner cells
-  for (int i = 0; i < (board->COL_NUM); i++) {
-    for (int j = 0; j < (board->ROW_NUM ); j++) {
-      i_prev = (1 < i) ? i - 1 : board->COL_NUM;
-      i_next = (i < board->COL_NUM ) ? i + 1 : 0;
-      j_prev = (1 < j) ? j - 1 : board->ROW_NUM;
-      j_next = (j < board->ROW_NUM) ? j + 1 : 0;    
+  for (int i = 0; i < (board->ROW_NUM); i++) {
+    for (int j = 0; j < (board->COL_NUM); j++) {
+      j_prev = (1 < j) ? j - 1 : board->COL_NUM;
+      j_next = (j < board->COL_NUM) ? j + 1 : 0;
+      i_prev = (1 < i) ? i - 1 : board->ROW_NUM;
+      i_next = (i < board->ROW_NUM) ? i + 1 : 0;
       if (board->cell_state[i_prev][j_prev] == ALIVE) {
         neighbors[i][j]++;
       }
@@ -74,77 +79,77 @@ void count_neighbors_spherical_world(board_t* board, unsigned char neighbors[D_C
   
   // Top cells
   for (int i = 1; i < (board->COL_NUM - 1); i++) {
-    if (board->cell_state[i-1][0] == ALIVE) {
-      neighbors[i][0]++;
+    if (board->cell_state[0][i-1] == ALIVE) {
+      neighbors[0][i]++;
     }
-    if (board->cell_state[i-1][1] == ALIVE) {
-      neighbors[i][0]++;
+    if (board->cell_state[1][i-1] == ALIVE) {
+      neighbors[0][i]++;
     }
-    if (board->cell_state[i][1] == ALIVE) {
-      neighbors[i][0]++;
+    if (board->cell_state[1][i] == ALIVE) {
+      neighbors[0][i]++;
     }
-    if (board->cell_state[i+1][1] == ALIVE) {
-      neighbors[i][0]++;
+    if (board->cell_state[1][i+1] == ALIVE) {
+      neighbors[0][i]++;
     }
-    if (board->cell_state[i+1][0] == ALIVE) {
-      neighbors[i][0]++;
+    if (board->cell_state[0][i+1] == ALIVE) {
+      neighbors[0][i]++;
     }
   }
   
   // Left cells
   for (int j = 1; j < (board->ROW_NUM - 1); j++) {
-    if (board->cell_state[0][j-1] == ALIVE) {
-      neighbors[0][j]++;
+    if (board->cell_state[j-1][0] == ALIVE) {
+      neighbors[j][0]++;
     }
-    if (board->cell_state[1][j-1] == ALIVE) {
-      neighbors[0][j]++;
+    if (board->cell_state[j-1][1] == ALIVE) {
+      neighbors[j][0]++;
     }
-    if (board->cell_state[1][j] == ALIVE) {
-      neighbors[0][j]++;
+    if (board->cell_state[j][1] == ALIVE) {
+      neighbors[j][0]++;
     }
-    if (board->cell_state[1][j+1] == ALIVE) {
-      neighbors[0][j]++;
+    if (board->cell_state[j+1][1] == ALIVE) {
+      neighbors[j][0]++;
     }
-    if (board->cell_state[0][j+1] == ALIVE) {
-      neighbors[0][j]++;
+    if (board->cell_state[j+1][0] == ALIVE) {
+      neighbors[j][0]++;
     }
   }
 
   // Bottom cells
   for (int i = 1; i < (board->COL_NUM - 1); i++) {
-    if (board->cell_state[i-1][board->ROW_NUM - 1] == ALIVE) {
-      neighbors[i][board->ROW_NUM - 1]++;
+    if (board->cell_state[board->ROW_NUM - 1][i-1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
     }
-    if (board->cell_state[i-1][board->ROW_NUM - 2] == ALIVE) {
-      neighbors[i][board->ROW_NUM - 1]++;
+    if (board->cell_state[board->ROW_NUM - 2][i-1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
     }
-    if (board->cell_state[i][board->ROW_NUM - 2] == ALIVE) {
-      neighbors[i][board->ROW_NUM - 1]++;
+    if (board->cell_state[board->ROW_NUM - 2][i] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
     }
-    if (board->cell_state[i+1][board->ROW_NUM - 2] == ALIVE) {
-      neighbors[i][board->ROW_NUM - 1]++;
+    if (board->cell_state[board->ROW_NUM - 2][i+1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
     }
-    if (board->cell_state[i+1][board->ROW_NUM - 1] == ALIVE) {
-      neighbors[i][board->ROW_NUM - 1]++;
+    if (board->cell_state[board->ROW_NUM - 1][i+1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
     }
   
   }
   // Right cells
   for (int j = 1; j < (board->ROW_NUM - 1); j++) {
-    if (board->cell_state[board->COL_NUM - 1][j-1] == ALIVE) {
-      neighbors[board->COL_NUM - 1][j]++;
+    if (board->cell_state[j-1][board->COL_NUM - 1] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
     }
-    if (board->cell_state[board->COL_NUM - 2][j-1] == ALIVE) {
-      neighbors[board->COL_NUM - 1][j]++;
+    if (board->cell_state[j-1][board->COL_NUM - 2] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
     }
-    if (board->cell_state[board->COL_NUM - 2][j] == ALIVE) {
-      neighbors[board->COL_NUM - 1][j]++;
+    if (board->cell_state[j][board->COL_NUM - 2] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
     }
-    if (board->cell_state[board->COL_NUM - 2][j+1] == ALIVE) {
-      neighbors[board->COL_NUM - 1][j]++;
+    if (board->cell_state[j+1][board->COL_NUM - 2] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
     }
-    if (board->cell_state[board->COL_NUM - 1][j+1] == ALIVE) {
-      neighbors[board->COL_NUM - 1][j]++;
+    if (board->cell_state[j+1][board->COL_NUM - 1] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
     }
   }
 
@@ -157,28 +162,184 @@ void count_neighbors_spherical_world(board_t* board, unsigned char neighbors[D_C
     neighbors[0][0]++;
 
   // Bottom left corner
-  if (board->cell_state[1][board->ROW_NUM - 1] == ALIVE)
-    neighbors[0][board->ROW_NUM - 1]++;
-  if (board->cell_state[1][board->ROW_NUM - 2] == ALIVE)
-    neighbors[0][board->ROW_NUM - 1]++;
-  if (board->cell_state[0][board->ROW_NUM - 2] == ALIVE)
-    neighbors[0][board->ROW_NUM - 1]++;
+  if (board->cell_state[board->ROW_NUM - 1][1] == ALIVE)
+    neighbors[board->ROW_NUM - 1][0]++;
+  if (board->cell_state[board->ROW_NUM - 2][1] == ALIVE)
+    neighbors[board->ROW_NUM - 1][0]++;
+  if (board->cell_state[board->ROW_NUM - 2][0] == ALIVE)
+    neighbors[board->ROW_NUM - 1][0]++;
 
   // Bottom right corner
-  if (board->cell_state[board->COL_NUM - 2][board->ROW_NUM - 1] == ALIVE)
-    neighbors[board->COL_NUM - 1][board->ROW_NUM - 1]++;
-  if (board->cell_state[board->COL_NUM - 1][board->ROW_NUM - 2] == ALIVE)
-    neighbors[board->COL_NUM - 1][board->ROW_NUM - 1]++;
-  if (board->cell_state[board->COL_NUM - 2][board->ROW_NUM - 2] == ALIVE)
-    neighbors[board->COL_NUM - 1][board->ROW_NUM - 1]++;
+  if (board->cell_state[board->ROW_NUM - 1][board->COL_NUM - 2] == ALIVE)
+    neighbors[board->ROW_NUM - 1][board->COL_NUM - 1]++;
+  if (board->cell_state[board->ROW_NUM - 2][board->COL_NUM - 1] == ALIVE)
+    neighbors[board->ROW_NUM - 1][board->COL_NUM - 1]++;
+  if (board->cell_state[board->ROW_NUM - 2][board->COL_NUM - 2] == ALIVE)
+    neighbors[board->ROW_NUM - 1][board->COL_NUM - 1]++;
 
   // Top left corner
-  if (board->cell_state[board->COL_NUM - 1][1] == ALIVE)
-    neighbors[board->COL_NUM - 1][0]++;
-  if (board->cell_state[board->COL_NUM - 2][1] == ALIVE)
-    neighbors[board->COL_NUM - 1][0]++;
-  if (board->cell_state[board->COL_NUM - 2][0] == ALIVE)
-    neighbors[board->COL_NUM - 1][0]++;
+  if (board->cell_state[1][board->COL_NUM - 1] == ALIVE)
+    neighbors[0][board->COL_NUM - 1]++;
+  if (board->cell_state[1][board->COL_NUM - 2] == ALIVE)
+    neighbors[0][board->COL_NUM - 1]++;
+  if (board->cell_state[0][board->COL_NUM - 2] == ALIVE)
+    neighbors[0][board->COL_NUM - 1]++;
+}
+
+void count_neighbors_spherical_world_mpi(board_t* board, unsigned char neighbors[D_ROW_NUM][D_COL_NUM], int firstRow, int lastRow)
+{
+	int i_prev, i_next, j_prev, j_next;
+	
+  // Clear neighbors
+  for (int i = firstRow; i <= lastRow; i++) {
+    for (int j = 0; j < board->COL_NUM; j++) {
+      neighbors[i][j] = DEAD;
+    }
+  }
+
+  // Inner cells
+  for (int i = firstRow; i <= lastRow; i++) {
+    for (int j = 0; j < (board->COL_NUM); j++) {
+      j_prev = (1 < j) ? j - 1 : board->COL_NUM;
+      j_next = (j < board->COL_NUM) ? j + 1 : 0;
+      i_prev = (1 < i) ? i - 1 : board->ROW_NUM;
+      i_next = (i < board->ROW_NUM) ? i + 1 : 0;
+      if (board->cell_state[i_prev][j_prev] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i][j_prev] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i_next][j_prev] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i_prev][j] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i_next][j] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i_prev][j_next] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i][j_next] == ALIVE) {
+        neighbors[i][j]++;
+      }
+      if (board->cell_state[i_next][j_next] == ALIVE) {
+        neighbors[i][j]++;
+      }
+    }
+  }
+
+  return;
+  
+  // Top cells
+  for (int i = 1; i < (board->COL_NUM - 1); i++) {
+    if (board->cell_state[0][i-1] == ALIVE) {
+      neighbors[0][i]++;
+    }
+    if (board->cell_state[1][i-1] == ALIVE) {
+      neighbors[0][i]++;
+    }
+    if (board->cell_state[1][i] == ALIVE) {
+      neighbors[0][i]++;
+    }
+    if (board->cell_state[1][i+1] == ALIVE) {
+      neighbors[0][i]++;
+    }
+    if (board->cell_state[0][i+1] == ALIVE) {
+      neighbors[0][i]++;
+    }
+  }
+  
+  // Left cells
+  for (int j = 1; j < (board->ROW_NUM - 1); j++) {
+    if (board->cell_state[j-1][0] == ALIVE) {
+      neighbors[j][0]++;
+    }
+    if (board->cell_state[j-1][1] == ALIVE) {
+      neighbors[j][0]++;
+    }
+    if (board->cell_state[j][1] == ALIVE) {
+      neighbors[j][0]++;
+    }
+    if (board->cell_state[j+1][1] == ALIVE) {
+      neighbors[j][0]++;
+    }
+    if (board->cell_state[j+1][0] == ALIVE) {
+      neighbors[j][0]++;
+    }
+  }
+
+  // Bottom cells
+  for (int i = 1; i < (board->COL_NUM - 1); i++) {
+    if (board->cell_state[board->ROW_NUM - 1][i-1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
+    }
+    if (board->cell_state[board->ROW_NUM - 2][i-1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
+    }
+    if (board->cell_state[board->ROW_NUM - 2][i] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
+    }
+    if (board->cell_state[board->ROW_NUM - 2][i+1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
+    }
+    if (board->cell_state[board->ROW_NUM - 1][i+1] == ALIVE) {
+      neighbors[board->ROW_NUM - 1][i]++;
+    }
+  
+  }
+  // Right cells
+  for (int j = 1; j < (board->ROW_NUM - 1); j++) {
+    if (board->cell_state[j-1][board->COL_NUM - 1] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
+    }
+    if (board->cell_state[j-1][board->COL_NUM - 2] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
+    }
+    if (board->cell_state[j][board->COL_NUM - 2] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
+    }
+    if (board->cell_state[j+1][board->COL_NUM - 2] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
+    }
+    if (board->cell_state[j+1][board->COL_NUM - 1] == ALIVE) {
+      neighbors[j][board->COL_NUM - 1]++;
+    }
+  }
+
+  // Top left corner
+  if (board->cell_state[1][0] == ALIVE)
+    neighbors[0][0]++;
+  if (board->cell_state[1][1] == ALIVE)
+    neighbors[0][0]++;
+  if (board->cell_state[0][1] == ALIVE)
+    neighbors[0][0]++;
+
+  // Bottom left corner
+  if (board->cell_state[board->ROW_NUM - 1][1] == ALIVE)
+    neighbors[board->ROW_NUM - 1][0]++;
+  if (board->cell_state[board->ROW_NUM - 2][1] == ALIVE)
+    neighbors[board->ROW_NUM - 1][0]++;
+  if (board->cell_state[board->ROW_NUM - 2][0] == ALIVE)
+    neighbors[board->ROW_NUM - 1][0]++;
+
+  // Bottom right corner
+  if (board->cell_state[board->ROW_NUM - 1][board->COL_NUM - 2] == ALIVE)
+    neighbors[board->ROW_NUM - 1][board->COL_NUM - 1]++;
+  if (board->cell_state[board->ROW_NUM - 2][board->COL_NUM - 1] == ALIVE)
+    neighbors[board->ROW_NUM - 1][board->COL_NUM - 1]++;
+  if (board->cell_state[board->ROW_NUM - 2][board->COL_NUM - 2] == ALIVE)
+    neighbors[board->ROW_NUM - 1][board->COL_NUM - 1]++;
+
+  // Top left corner
+  if (board->cell_state[1][board->COL_NUM - 1] == ALIVE)
+    neighbors[0][board->COL_NUM - 1]++;
+  if (board->cell_state[1][board->COL_NUM - 2] == ALIVE)
+    neighbors[0][board->COL_NUM - 1]++;
+  if (board->cell_state[0][board->COL_NUM - 2] == ALIVE)
+    neighbors[0][board->COL_NUM - 1]++;
 }
 
 void count_neighbors_flat_world(board_t* board, unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
@@ -350,8 +511,8 @@ void evolve(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
 
 void evolve_mpi(board_t* board, const unsigned char neighbors[D_COL_NUM][D_ROW_NUM], int firstRow, int lastRow)
 {
-  for (int i = 0; i < board->COL_NUM; i++) {
-    for (int j = firstRow; j < lastRow; j++) {
+  for (int i = firstRow; i <= lastRow; i++) {
+    for (int j = 0; j < board->COL_NUM; j++) {
       // underopulation case
       if (neighbors[i][j] < 2)
         board->cell_state[i][j] = DEAD;
