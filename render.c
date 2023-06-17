@@ -6,8 +6,21 @@
 
 bool Graphical_Mode = false;
 
+void print_board1(board_t *board)
+{
+	for (int i = 0; i < board->COL_NUM; i++)
+	{
+		for (int j = 0; j < board->ROW_NUM; j++)
+		{
+			printf(" %d", board->cell_state[i][j]);
+		}
+		printf("\n");
+	}
+	fflush(stdout);
+}
+
 void render_board(SDL_Renderer* renderer, board_t* board,
-                  unsigned char neighbors[D_COL_NUM][D_ROW_NUM])
+                  unsigned char neighbors[D_ROW_NUM][D_COL_NUM])
 {
   switch(board->game_state) {
     case RUNNING_STATE:
@@ -32,7 +45,7 @@ void mpi_render_board(SDL_Renderer* renderer, board_t* board,
   switch(board->game_state) {
     case RUNNING_STATE:
 
-      if ((iteration == 0) || (rank != 0 && iteration > 0)) {
+      if ((iteration == 0) || (rank != 0)) {
         // The rank 0 process doesn't need to receive the neighbors cells, because it already has them from the gather operation (except for the iteration 0)
       
         // Receive the neighbors cells from the other processes
@@ -50,27 +63,13 @@ void mpi_render_board(SDL_Renderer* renderer, board_t* board,
         // Wait for the receive operations to complete
         MPI_Wait(&topRowRequest, MPI_STATUS_IGNORE);
         MPI_Wait(&bottomRowRequest, MPI_STATUS_IGNORE);
-
-        if (rank==1) {
-          printf("Row %i received from rank %d: ", bottomRowToReceive, neighborsRank[1]);
-          for (int i = 0; i < board->COL_NUM; i++) {
-            printf("%u", board->cell_state[bottomRowToReceive][i]);
-          }
-          printf("\n");
-          printf("Row %i received from rank %d: ", topRowToReceive, neighborsRank[0]);
-          for (int i = 0; i < board->COL_NUM; i++) {
-            printf("%u", board->cell_state[topRowToReceive][i]);
-          }
-          fflush(stdout);
-        }
-
       }
 
       if (Graphical_Mode && rank == 0)
         render_running_state(renderer, board);
 
-      count_neighbors(board, neighbors);
-      evolve(board, neighbors);
+      count_neighbors_mpi(board, neighbors, firstRow, lastRow);
+      evolve_mpi(board, neighbors, firstRow, lastRow);
 
       // Send the neighbors cells to the other processes
 

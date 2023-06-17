@@ -91,7 +91,7 @@ int main(int argc, char **argv)
 			board->cell_state[i][j] = DEAD;
 	}
 
-	unsigned char neighbors[D_COL_NUM][D_ROW_NUM] = {DEAD};
+	unsigned char neighbors[D_ROW_NUM][D_COL_NUM] = {DEAD};
 
 	// Command line options.
 	int opt;
@@ -194,7 +194,8 @@ int main(int argc, char **argv)
 
 	if (LoadFile)
 	{
-		printf("Loading Board file %s.\n", input_file);
+		if (rank == 0)
+			printf("Loading Board file %s.\n", input_file);
 		mpi_life_read(input_file, board, firstRow, lastRow);
 	}
 	else
@@ -212,29 +213,7 @@ int main(int argc, char **argv)
 
 	MPI_Isend(&board->cell_state[firstRow][0], 1, MPI_ROW, upNeighbor, DOWN_TO_UP_TAG, MPI_COMM_WORLD, &request[0]);
 
-	if (rank==0) {
-		printf("Sending row %d to %d. Row sent:", firstRow, upNeighbor);
-
-		for (int i = 0; i < board->COL_NUM; i++)
-		{
-			printf("%u", board->cell_state[firstRow][i]);
-		}
-		printf("\n");
-		fflush(stdout);
-	}
-
 	MPI_Isend(&board->cell_state[lastRow][0], 1, MPI_ROW, downNeighbor, UP_TO_DOWN_TAG, MPI_COMM_WORLD, &request[1]);
-
-	if (rank==0) {
-		printf("Sending row %d to %d. Row sent:", lastRow, downNeighbor);
-
-		for (int i = 0; i < board->COL_NUM; i++)
-		{
-			printf("%u", board->cell_state[lastRow][i]);
-		}
-		printf("\n");
-		fflush(stdout);
-	}
 	
 	if (Graphical_Mode && rank == 0)
 	{
@@ -403,7 +382,7 @@ int main(int argc, char **argv)
 		if (Iteration > 0) {
 			// Gather all the data from the other processes for rendering the board on screen
 			// Copy the board cell state to another array, so that the gather operation doesn't overwrite the current board state
-			unsigned char cellStateCopy[board->COL_NUM][board->ROW_NUM];
+			unsigned char cellStateCopy[board->ROW_NUM][board->COL_NUM];
 			memcpy(cellStateCopy, board->cell_state, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
 
 			MPI_Gather(&board->cell_state[firstRow][0], rowsPerProcess, MPI_ROW, &cellStateCopy, rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
@@ -411,8 +390,6 @@ int main(int argc, char **argv)
 			if (rank == 0) {
 				// Copy the received data to the board cell state
 				memcpy(board->cell_state, cellStateCopy, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
-				// Print board
-				print_board(board);
 			}
 		}
 
@@ -449,6 +426,8 @@ int main(int argc, char **argv)
 		//life_write(output_file, board);
 		mpi_life_write(output_file, board, firstRow, lastRow);
 	}
-
+	MPI_Type_free(&MPI_ROW);
+	free(board);
+	MPI_Finalize();
 	return EXIT_SUCCESS;
 }
