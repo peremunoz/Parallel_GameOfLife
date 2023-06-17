@@ -110,18 +110,22 @@ int main(int argc, char **argv)
 		case 'o':
 			SaveFile = true;
 			strcpy(output_file, optarg);
-			printf("Output Board file %s.\n", optarg);
+			if (rank == 0)
+				printf("Output Board file %s.\n", optarg);
 			break;
 		case 'w':
 			board->COL_NUM = atoi(optarg);
-			printf("Board width %d.\n", board->COL_NUM);
+			if (rank == 0)
+				printf("Board width %d.\n", board->COL_NUM);
 			break;
 		case 'h':
 			board->ROW_NUM = atoi(optarg);
-			printf("Board height %d.\n", board->ROW_NUM);
+			if (rank == 0)
+				printf("Board height %d.\n", board->ROW_NUM);
 			break;
 		case 'e':
-			printf("End Time: %s.\n", optarg);
+			if (rank == 0)
+				printf("End Time: %s.\n", optarg);
 			EndTime = atoi(optarg);
 			break;
 		case 'g':
