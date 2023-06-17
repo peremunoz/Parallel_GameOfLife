@@ -1,0 +1,7 @@
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/conway.dir
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/edit_cache.dir
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/rebuild_cache.dir
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/list_install_components.dir
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/install.dir
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/install/local.dir
+/home/peremunoz/Escritorio/CDA/Práctica 2/CMakeFiles/install/strip.dir

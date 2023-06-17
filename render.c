@@ -2,6 +2,8 @@
 #include <SDL2/SDL.h>
 #endif
 
+#include <stdio.h>
+
 #include "./game.h"
 #include "./render.h"
 #include "./logic.h"
@@ -21,23 +23,6 @@ void print_board1(board_t *board)
 	fflush(stdout);
 }
 
-void render_board(SDL_Renderer* renderer, board_t* board,
-                  unsigned char neighbors[D_ROW_NUM][D_COL_NUM])
-{
-  switch(board->game_state) {
-    case RUNNING_STATE:
-      if (Graphical_Mode)
-        render_running_state(renderer, board);
-      count_neighbors(board, neighbors);
-      evolve(board, neighbors);
-      break;
-    case PAUSE_STATE:
-      if (Graphical_Mode)
-        render_pause_state(renderer, board);
-      break;
-    default: {}
-  }
-}
 #ifndef NO_SDL
 void mpi_render_board(SDL_Renderer* renderer, board_t* board,
                   unsigned char neighbors[D_COL_NUM][D_ROW_NUM],
@@ -152,7 +137,7 @@ void mpi_render_board(board_t* board,
     default: {}
   }
 }
-#endif
+#else
 
 void render_running_state(SDL_Renderer *renderer, board_t *board)
 {
@@ -206,4 +191,4 @@ void pause_square(SDL_Renderer *renderer, int pos_x, int pos_y, board_t* board)
   SDL_RenderFillRect(renderer, &cell);
 }
 
-
+#endif

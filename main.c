@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 
 #ifndef NO_SDL
 #include <SDL2/SDL.h>
@@ -51,13 +52,13 @@ int main(int argc, char **argv)
 	MPI_Comm_size(MPI_COMM_WORLD, &numTasks);
 	MPI_Comm_rank(MPI_COMM_WORLD, &rank);
 
-#ifndef NO_SDL
-	// Set default rate of ticks.
-	int TICKS = 50000;
+	// Set defaults
 	bool LoadFile = false, SaveFile = false;
 	int EndTime = -1;
 	char input_file[256], output_file[256];
 
+#ifndef NO_SDL
+	int TICKS = 50000;
 	// Graphics.
 	int SCREEN_WIDTH;
 	int SCREEN_HEIGHT;
@@ -67,13 +68,14 @@ int main(int argc, char **argv)
 	SDL_Rect peeper; // In future may take values from event loop.
 	SDL_Window *window;
 	SDL_Renderer *renderer;
-#endif
+
 	// Set initial window scaling factor
 	float SCALE = 0.5;
 
 	// This will store window dimension information.
 	int window_width;
 	int window_height;
+#endif
 
 	board_t *board = (board_t *)malloc(sizeof(board_t));
 	if (board == NULL)
@@ -104,7 +106,9 @@ int main(int argc, char **argv)
 		switch (opt)
 		{
 		case 't':
+		#ifndef NO_SDL
 			TICKS = atoi(optarg);
+		#endif
 			break;
 		case 'i':
 			strcpy(input_file, optarg);
@@ -423,12 +427,14 @@ int main(int argc, char **argv)
 	if (rank == 0)
 		printf("\nEnd Simulation.\n");
 
+#ifndef NO_SDL
 	if (Graphical_Mode && rank==0)
 	{
 		// Clean up
 		SDL_DestroyWindow(window);
 		SDL_Quit();
 	}
+#endif
 
 	// Save board
 	if (SaveFile)
