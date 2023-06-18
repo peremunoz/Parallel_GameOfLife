@@ -395,14 +395,13 @@ int main(int argc, char **argv)
 		if (Iteration > 0) {
 			// Gather all the data from the other processes for rendering the board on screen
 			// Copy the board cell state to another array, so that the gather operation doesn't overwrite the current board state
-			unsigned char cellStateCopy[board->ROW_NUM][board->COL_NUM];
-			memcpy(cellStateCopy, board->cell_state, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
+			unsigned char cellStateCopy [D_COL_NUM][D_ROW_NUM];
+			memcpy(&cellStateCopy, board->cell_state, sizeof(cellStateCopy));
 
 			MPI_Gather(&board->cell_state[firstRow][0], rowsPerProcess, MPI_ROW, &cellStateCopy, rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
-
 			if (rank == 0) {
 				// Copy the received data to the board cell state
-				memcpy(board->cell_state, cellStateCopy, sizeof(unsigned char) * board->COL_NUM * board->ROW_NUM);
+				memcpy(board->cell_state, &cellStateCopy, sizeof(cellStateCopy));
 			}
 		}
 #ifdef NO_SDL
