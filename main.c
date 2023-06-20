@@ -187,15 +187,23 @@ int main(int argc, char **argv)
 	MPI_Type_commit(&MPI_ROW);
 
 	// Divide the board rows among the processes.
+	int unevenDivision = board->ROW_NUM % numTasks;
 	int rowsPerProcess = board->ROW_NUM / numTasks;
 	int firstRow = rank * rowsPerProcess;
 	int lastRow = firstRow + rowsPerProcess - 1;
 
-	// If the board cannot be evenly divided among the processes, give the last process the extra rows.
-	if (rank == numTasks - 1)
+	// If the board cannot be evenly divided among the processes, give the process 0, 1 more row.
+	if (unevenDivision != 0)
 	{
-		lastRow += board->ROW_NUM % numTasks;
+		if (rank != 0) {
+			firstRow += 1;
+			lastRow += 1;
+		} else {
+			lastRow += unevenDivision;
+		}
 	}
+
+	printf("Process %d after adjustment: first row %d, last row %d\n", rank, firstRow, lastRow);
 
 	// Calculate the neighbor processes. (as the world is round, the first and last process are neighbors)
 	int upNeighbor = (rank == 0) ? numTasks - 1 : rank - 1;
@@ -398,10 +406,21 @@ int main(int argc, char **argv)
 			unsigned char cellStateCopy [D_COL_NUM][D_ROW_NUM];
 			memcpy(&cellStateCopy, board->cell_state, sizeof(cellStateCopy));
 
-			MPI_Gather(&board->cell_state[firstRow][0], rowsPerProcess, MPI_ROW, &cellStateCopy, rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
+			int firstRowToSend = firstRow;
+
+			if (unevenDivision != 0 && rank == 0) {
+				firstRowToSend++;
+			}
+
+			MPI_Gather(&board->cell_state[firstRowToSend][0], rowsPerProcess, MPI_ROW, &cellStateCopy[firstRowToSend][0], rowsPerProcess * numTasks, MPI_ROW, 0, MPI_COMM_WORLD);
+
 			if (rank == 0) {
+				if (unevenDivision != 0) {
+					// First copy the first row of the board to the cell state copy
+					memcpy(&cellStateCopy[0][0], &board->cell_state[0][0], sizeof(cellStateCopy[0]));
+				}
 				// Copy the received data to the board cell state
-				memcpy(board->cell_state, &cellStateCopy, sizeof(cellStateCopy));
+				memcpy(board->cell_state, &cellStateCopy[0][0], sizeof(cellStateCopy));
 			}
 		}
 #ifdef NO_SDL
