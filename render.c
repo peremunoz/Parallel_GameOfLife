@@ -144,8 +144,8 @@ void render_running_state(SDL_Renderer *renderer, board_t *board)
   int pos_x = 0;
   int pos_y = 0;
 
-  for (int i = 0; i < board->COL_NUM; i++) {
-    for (int j = 0; j < board->ROW_NUM; j++) {
+  for (int i = 0; i < board->ROW_NUM; i++) {
+    for (int j = 0; j < board->COL_NUM; j++) {
       pos_x = i * board->CELL_WIDTH;
       pos_y = j * board->CELL_HEIGHT;
       if (board->cell_state[i][j] == ALIVE)

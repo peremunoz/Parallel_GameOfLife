@@ -18,9 +18,9 @@
 
 void print_board(board_t *board)
 {
-	for (int i = 0; i < board->COL_NUM; i++)
+	for (int i = 0; i < board->ROW_NUM; i++)
 	{
-		for (int j = 0; j < board->ROW_NUM; j++)
+		for (int j = 0; j < board->COL_NUM; j++)
 		{
 			printf(" %d", board->cell_state[i][j]);
 		}
@@ -90,9 +90,9 @@ int main(int argc, char **argv)
 	board->COL_NUM = D_COL_NUM;
 	board->ROW_NUM = D_ROW_NUM;
 
-	for (int i = 0; i < board->COL_NUM; i++)
+	for (int i = 0; i < board->ROW_NUM; i++)
 	{
-		for (int j = 0; j < board->ROW_NUM; j++)
+		for (int j = 0; j < board->COL_NUM; j++)
 			board->cell_state[i][j] = DEAD;
 	}
 
@@ -196,8 +196,8 @@ int main(int argc, char **argv)
 	if (unevenDivision != 0)
 	{
 		if (rank != 0) {
-			firstRow += 1;
-			lastRow += 1;
+			firstRow += unevenDivision;
+			lastRow += unevenDivision;
 		} else {
 			lastRow += unevenDivision;
 		}
@@ -403,7 +403,7 @@ int main(int argc, char **argv)
 		if (Iteration > 0) {
 			// Gather all the data from the other processes for rendering the board on screen
 			// Copy the board cell state to another array, so that the gather operation doesn't overwrite the current board state
-			unsigned char cellStateCopy [D_COL_NUM][D_ROW_NUM];
+			unsigned char cellStateCopy [D_ROW_NUM][D_COL_NUM];
 			memcpy(&cellStateCopy, board->cell_state, sizeof(cellStateCopy));
 
 			int firstRowToSend = firstRow;
